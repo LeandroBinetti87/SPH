@@ -70,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         len: {
           args: [8, 100],
-          msg: 'Password must contain at least 1 uppercase letter, 1 lowercase letter and 1 number33'
+          msg: 'Password must contain at least 1 uppercase letter, 1 lowercase letter and 1 number'
         }
       }
     },

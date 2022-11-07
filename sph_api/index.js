@@ -6,9 +6,11 @@ const { SERVER_PORT, SERVER_IP } = require('./config/server.js');
 const app = express();
 
 var cors = require('cors');
-app.use(cors({
-    origin: 'http://localhost:3000',
-}));
+//app.use(cors({
+//    origin: 'http://localhost:3000',
+//}));
+
+app.use(cors()); //Abro cors para todo WARNING
 
 app.use(express.static('public'));
 app.use('/api', tokenAuth, apiRoutes);

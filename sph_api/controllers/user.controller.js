@@ -14,7 +14,15 @@ exports.getUsers = (req, res) => {
 };
 
 exports.getUserById = (req, res) => {
-  models.User.findByPk(req.params.id)
+  //models.User.findByPk(req.params.id)
+  models.User.findOne({
+    where: {
+      id: req.params.id
+    },
+      attributes: [
+      'id', 'name', 'surname', 'email', 'firma', 'isAdmin', 'isEnabled', 'createdAt', 'updatedAt'
+    ]
+  })
     .then(user => {
       if (user) {
         res.status(200).json({ status: '1', msg: 'User id:' + req.params.id, user });
@@ -28,15 +36,25 @@ exports.getUserById = (req, res) => {
 };
 
 exports.createUser = (req, res) => {
-  const fileSource = req.file.destination + req.file.filename;
-  const fileDestination = fileSource + '_' + req.file.originalname;
-  const publicDestination = 'assets/firmas/' + req.file.filename + '_' + req.file.originalname;
-  fs.rename(fileSource, fileDestination, function (err) {
-    if (err) console.log('ERROR: ' + err);
-  });
+  let fileDest = '';
+  try {
+    const fileSource = req.file.destination + req.file.filename;
+    console.log("ARCHIVO: " + req.file.filename + " | " + req.file.originalname + " | " + req.file.destination);
+    const fileDestination = fileSource + '_' + req.file.originalname;
+    const publicDestination = 'assets/firmas/' + req.file.filename + '_' + req.file.originalname;
+    fileDest = publicDestination;
+    fs.rename(fileSource, fileDestination, function (err) { });
+    console.log("Aqui deberia leer el archivo");
+    //console.log(req);
+  }
+  catch(err) {
+    console.log('ERROR: ' + err);
+    res.status(409).json({ status: '0', msg: "User image error" });
+    return;
+  };
 
   const hash = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(req.query.password) ? bcrypt.hashSync(req.query.password, 10) : '';
-  models.User.create({ name: req.query.name, surname: req.query.surname, email: req.query.email, password: hash, firma: publicDestination, isAdmin: req.query.isAdmin, isEnabled: req.query.isEnabled })
+  models.User.create({ name: req.query.name, surname: req.query.surname, email: req.query.email, password: hash, firma: fileDest, isAdmin: req.query.isAdmin, isEnabled: req.query.isEnabled })
     .then(user => {
       res.status(201).json({ status: '1', msg: 'User created', user });
     })
@@ -44,7 +62,7 @@ exports.createUser = (req, res) => {
       if (err.name === 'SequelizeUniqueConstraintError') {
         res.status(409).json({ status: '0', msg: err.errors[0].message });
       } else {
-        res.status(501).json({ status: '0', msg: 'Server error | ' + err });
+        res.status(501).json({ status: '0', msg: err.errors[0].message });
       }
     })
 };
@@ -54,7 +72,11 @@ exports.updateUserById = (req, res) => {
   const fileDestination = fileSource + '_' + req.file.originalname;
   const publicDestination = 'assets/firmas/' + req.file.filename + '_' + req.file.originalname;
   fs.rename(fileSource, fileDestination, function (err) {
-    if (err) console.log('ERROR: ' + err);
+    if (err) {
+      console.log('ERROR: ' + err);
+      res.status(409).json({ status: '0', msg: "User image error" });
+      return;
+    }
   });
   let queryParameters = {};
   if (req.query.password) {
